@@ -216,8 +216,6 @@ And of course, other positive power-of-2 indices can be optimized for similarly.
 
 `x %% y` would have the same precedence and rules for its operands as `x % y` (as in, be a multiplicative operator), and [12.7.3](https://tc39.es/ecma262/#sec-multiplicative-operators-runtime-semantics-evaluation) would be altered accordingly using *T*::modulo as explained below.
 
-The following abstract operations would be added to the BigInt and Numeric types:
-
 BigInt::modulo(*x*, *y*)
 
 1. Let *result* be ? BigInt::remainder(*x*, *y*).
@@ -228,7 +226,7 @@ BigInt::modulo(*x*, *y*)
 
 Number::modulo(*x*, *y*)
 
-1. Let *remainder* be ? Number::remainder(*x*, *y*).
+1. Let *remainder* be the result of applying the **`%`** operator.
 1. Let *result* be the Number with the sign of *y* and the magnitude of abs(*remainder*).
 1. Return *result*.
 
