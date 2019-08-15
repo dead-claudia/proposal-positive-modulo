@@ -227,5 +227,13 @@ BigInt::modulo(*x*, *y*)
 Number::modulo(*x*, *y*)
 
 1. Let *remainder* be ? Number::remainder(*x*, *y*).
-1. Let *result* be the number with the sign of *y* and the magnitude of abs(*remainder*).
+1. Let *result* be the Number with the sign of *y* and the magnitude of abs(*remainder*).
 1. Return *result*.
+
+> Note: I don't use the `(x % y + y) % y` as the spec here because of three reasons:
+>
+> 1. For bigints, it just complicates the spec and clouds the intent.
+> 2. For floats, it's imprecise compared to `copysign(fmod(x, y), y)`.
+> 3. It's meant to model how a native implementation might implement it, not how a transpiler would.
+>
+> Transpilers usually optimize for code size over mathematical precision, so I'd expect them to do `(x % y + y) % y`.
