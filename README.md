@@ -221,7 +221,9 @@ The following abstract operations would be added to the BigInt and Numeric types
 BigInt::modulo(*x*, *y*)
 
 1. Let *result* be ? BigInt::remainder(*x*, *y*).
-1. If *y* < 0, then set *result* to BigInt::unaryMinus(*result*).
+1. Let *signY* be -1 if *y* < 0, 1 otherwise.
+1. Let *signResult* be -1 if *result* < 0, 1 otherwise.
+1. If *signY* does not equal *signResult*, set *result* to BigInt::unaryMinus(*result*).
 1. Return *result*.
 
 Number::modulo(*x*, *y*)
@@ -230,7 +232,7 @@ Number::modulo(*x*, *y*)
 1. Let *result* be the Number with the sign of *y* and the magnitude of abs(*remainder*).
 1. Return *result*.
 
-> Note: I don't use the `(x % y + y) % y` as the spec here because of three reasons:
+> Note: I don't just spec it as `x %% y` &harr; `(x % y + y) % y` because of three reasons:
 >
 > 1. For bigints, it just complicates the spec and clouds the intent.
 > 2. For floats, it's imprecise compared to `copysign(fmod(x, y), y)`.
