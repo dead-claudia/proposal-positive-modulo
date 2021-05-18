@@ -1,6 +1,6 @@
-# Divisor-dependent Modulo
+# Positive Modulo
 
-A proposal for adding a divisor-dependent modulo operator to ECMAScript.
+A proposal for adding a positive modulo operator to ECMAScript.
 
 ## Introduction
 
@@ -77,7 +77,7 @@ There's also other issues and glitches people have run into with a dividend-depe
 
 ## Proposal
 
-Now, imagine if we had a `x %% y` that was like `x % y`, but instead of returning the sign of `x`, returned the sign of `y`. Let's look at those again, but swap in the new operators:
+Now, imagine if we had a `x %% y` that was like `x % y`, but instead of returning the sign of `x`, always returned a positive number. Let's look at those again, but swap in the new operators:
 
 ```js
 function isOdd(x) {
@@ -172,7 +172,7 @@ function isEven(x) {
 }
 ```
 
-Let's compare that with the dividend-dependent `x %% y`:
+Let's compare that with the positive `x %% y`:
 
 ```js
 function isOdd(x) {
@@ -216,24 +216,26 @@ And of course, other positive power-of-2 indices can be optimized for similarly.
 
 `x %% y` would have the same precedence and rules for its operands as `x % y` (as in, be a multiplicative operator), and [12.7.3](https://tc39.es/ecma262/#sec-multiplicative-operators-runtime-semantics-evaluation) would be altered accordingly using *T*::modulo as explained below.
 
-BigInt::modulo(*x*, *y*)
+> Note: I don't just spec it as `x %% y` &harr; `(x % y + y) % y` because the idea is to give flexibility in implementation - one might choose to avoid attempting multiple `fmod` calls for one.
 
-1. Let *result* be ? BigInt::remainder(*x*, *y*).
-1. Let *signY* be -1 if *y* < 0, 1 otherwise.
-1. Let *signResult* be -1 if *result* < 0, 1 otherwise.
-1. If *signY* does not equal *signResult*, set *result* to BigInt::unaryMinus(*result*).
-1. Return *result*.
+BigInt::modulo(*n*, *d*)
 
-Number::modulo(*x*, *y*)
+1. If *d* is **0**<sub>ℤ</sub>, throw a **RangeError** exception.
+2. If *n* is **0**<sub>ℤ</sub>, return **0**<sub>ℤ</sub>.
+3. Let *r* be the BigInt defined by the mathematical relation *r* = *n* - (*d* × *q*) where *q* is a BigInt that is positive and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of *n* and *d*.
+4. Return *r*.
 
-1. Let *remainder* be the result of applying the **`%`** operator.
-1. Let *result* be the Number with the sign of *y* and the magnitude of abs(*remainder*).
-1. Return *result*.
+> Note: the sign of the result is always positive, aligning with Euclidean division.
 
-> Note: I don't just spec it as `x %% y` &harr; `(x % y + y) % y` because of three reasons:
->
-> 1. For bigints, it just complicates the spec and clouds the intent.
-> 2. For floats, it's imprecise compared to `copysign(fmod(x, y), y)`.
-> 3. It's meant to model how a native implementation might implement it, not how a transpiler would.
->
-> Transpilers usually optimize for code size over mathematical precision, so I'd expect them to do `(x % y + y) % y`.
+Number::modulo(*n*, *d*)
+
+1. If *n* is **NaN** or *d* is **NaN**, return **NaN**.
+2. If *n* is **+∞**<sub>𝔽</sub> or *n* is **-∞**<sub>𝔽</sub>, return **NaN**.
+3. If *d* is **+∞**<sub>𝔽</sub> or *d* is **-∞**<sub>𝔽</sub>, return *n*.
+4. If *d* is **+0**<sub>𝔽</sub> or *d* is **-0**<sub>𝔽</sub>, return **NaN**.
+5. If *n* is **+0**<sub>𝔽</sub> or *n* is **-0**<sub>𝔽</sub>, return *n*.
+6. Assert: *n* and *d* are finite and non-zero.
+7. Let *r* be ℝ(*n*) - (ℝ(*d*) × *q*) where *q* is an integer that is positive, and whose magnitude is as large as possible without exceeding the magnitude of ℝ(*n*) / ℝ(*d*).
+8. Return 𝔽(r).
+
+> Note: the sign of the result is always positive, aligning with Euclidean division.
