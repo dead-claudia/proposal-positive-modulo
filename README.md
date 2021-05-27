@@ -75,6 +75,13 @@ Do I expect this to be caught in a code review? Not really.
 
 There's also other issues and glitches people have run into with a dividend-dependent modulo being the default, like in [this StackOverflow question about an issue in C](https://stackoverflow.com/questions/14997165/fastest-way-to-get-a-positive-modulo-in-c-c) where they wanted to allow wraparound on an array where the index might be negative *and* less than `-array.length`. The usual workaround is to do `(a % b + b) % b`.
 
+Here's a couple other examples I know right off the top of my head:
+
+- `list[value % list.length]` will return `undefined` if `value` is negative, which is almost certainly not what the user intended.
+- If you want to iterate forward, you can just do `index = (index + 1) % limit` and wrap around fairly easily. If you do this in reverse with `index = (index - 1) % limit`, the index will go negative, and you probably weren't intending for that to happen.
+    - This happens quite frequently with circular buffers, where you typically loop from `start` to `(start - 1) mod list.length`, or in reverse from `start` to `(start + 1) mod list.length`, where after each loop you do either `index = (index + 1) mod list.length` or `index = (index - 1) mod list.length`.
+- Most mathematical operations are defined in terms of Euclidean modulus, making this the operator of choice for related mathematical computation.
+
 ## Proposal
 
 Now, imagine if we had a `x %% y` that was like `x % y`, but instead of returning the sign of `x`, always returned a positive number. Let's look at those again, but swap in the new operators:
@@ -211,6 +218,49 @@ function isEven(x) {
 ```
 
 And of course, other positive power-of-2 indices can be optimized for similarly.
+
+For the general case with integers, it's considerably more straightforward and still trivially inlinable, and as long as both inputs are N-bit integers, the output will also always be an integer that can be represented with N bits.
+
+```js
+function intModulo(a: i31, b: i31) {
+    b &= 0x7FFFFFFF // absolute value
+    a %= b
+    b &= a >> 31 // 1 ARM instruction, 2 x86 instructions with needed scratch
+    a += b
+    return a
+}
+```
+
+> In 64-bit ARM, that might look like this:
+> ```asm
+> ; r8 = a, r9 = b
+> intModulo:
+>     and w8, w1, #0x7fffffff
+>     sdiv w9, w0, w8
+>     msub w9, w9, w8, w0
+>     and w8, w8, w9, asr #31
+>     add w0, w8, w9
+>     ret
+> ```
+>
+> In x86 (Intel syntax), it might look like this:
+> ```asm
+> ; esi = a, edi = b
+> intModulo:
+>     mov eax, edi
+>     and esi, 0x7FFFFFFF
+>     cdq
+>     idiv esi
+>     mov eax, edx
+>     sar eax, 31
+>     and eax, esi
+>     add eax, edx
+>     ret
+> ```
+>
+> As you can see, it's easily inlined.
+>
+> I'll leave it as an exercise for the reader how floating point Euclidean modulus would compile as it's considerably more complicated.
 
 ## Spec
 
