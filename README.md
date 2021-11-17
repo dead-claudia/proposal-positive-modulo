@@ -26,8 +26,6 @@ It all here seems working at first glance:
 | `4`    | `false`    | `true`      |
 | `0`    | `false`    | `true`      |
 | `-0`   | `false`    | `true`      |
-| `-1`   | `true`     | `false`     |
-| `-3`   | `true`     | `false`     |
 | `-2`   | `false`    | `true`      |
 | `-4`   | `false`    | `true`      |
 | `1.5`  | `false`    | `false`     |
